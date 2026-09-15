@@ -1,0 +1,329 @@
+<title>Day-2 Hand-off · Prototype</title>
+<style>
+  :root{
+    --paper:#EDF2F0;
+    --card:#FFFFFF;
+    --ink:#122B2F;
+    --muted:#5C7073;
+    --hairline:#D7E0DE;
+    --accent:#D97A26;
+    --teal:#147E76;
+    --good:#2E9E4F;
+    --sink:#0E2326;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#0B1B1F;--card:#122429;--ink:#E6EEED;--muted:#93A6A8;
+      --hairline:#22383C;--accent:#E88A38;--teal:#46B9A8;--good:#4BB767;--sink:#E8F0EF;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0B1B1F;--card:#122429;--ink:#E6EEED;--muted:#93A6A8;
+    --hairline:#22383C;--accent:#E88A38;--teal:#46B9A8;--good:#4BB767;--sink:#E8F0EF;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;min-height:100vh;
+    background:var(--paper);color:var(--ink);
+    font-family:"Figtree",system-ui,sans-serif;font-size:16px;line-height:1.5;
+    display:flex;flex-direction:column;align-items:center;
+    padding:clamp(18px,4vw,40px) clamp(14px,4vw,32px) 30px;
+  }
+  .note{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--muted);text-align:center;margin:0 0 18px;
+  }
+  .note b{color:var(--accent);font-weight:600}
+
+  /* ---------- app frame ---------- */
+  .frame{
+    width:100%;max-width:560px;
+    background:var(--paper);
+    border:1px solid var(--hairline);border-radius:22px;
+    overflow:hidden;
+    box-shadow:0 24px 60px color-mix(in srgb,var(--sink) 14%, transparent);
+    display:flex;flex-direction:column;
+  }
+  .statusbar{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;
+    font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted)}
+  .sb-icons{display:flex;gap:5px}.sb-icons i{display:block;width:13px;height:8px;border:1px solid var(--muted);border-radius:2px;font-style:normal}
+  .apphead{display:flex;align-items:center;justify-content:space-between;padding:6px 16px 14px}
+  .logo{font-family:"Fraunces",serif;font-weight:620;font-size:1.15rem;color:var(--ink)}
+  .logo i{font-style:normal;color:var(--accent)}
+  .chip{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--teal);
+    border:1px solid color-mix(in srgb,var(--teal) 40%, transparent);border-radius:999px;padding:4px 9px}
+  .chip b{font-weight:600}
+
+  /* ---------- screens ---------- */
+  .screen{padding:6px 22px 10px;min-height:440px;transition:opacity .22s ease, transform .22s ease}
+  .screen.swap{opacity:0;transform:translateY(6px)}
+  .sblk{max-width:470px;margin-inline:auto}
+
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--teal);margin:0 0 10px;display:flex;align-items:center;gap:10px}
+  .eyebrow::after{content:"";flex:1;height:1px;background:var(--hairline)}
+  h1,h2{font-family:"Fraunces",serif;font-weight:560;line-height:1.15;margin:0 0 10px;text-wrap:balance}
+  h1{font-size:1.85rem}
+  h2{font-size:1.35rem}
+  .sub{color:var(--muted);font-size:.95rem;margin:0 0 18px}
+  .sel{display:flex;flex-direction:column;gap:10px}
+  .opt{border:1.4px solid var(--hairline);background:var(--card);border-radius:13px;padding:13px 14px;
+    display:flex;align-items:center;gap:11px;cursor:pointer;text-align:left;font:inherit;color:var(--ink);transition:border-color .15s, box-shadow .15s}
+  .opt:hover{border-color:var(--teal)}
+  .opt.pick{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+  .opt .rk{font-family:"IBM Plex Mono",monospace;font-size:16px;color:var(--accent);width:18px;flex:none}
+  .opt .t b{display:block;font-weight:600;font-size:.96rem}
+  .opt .t span{color:var(--muted);font-size:.8rem}
+  .primary{width:100%;margin-top:18px;background:var(--accent);color:#fff;border:0;border-radius:12px;
+    padding:13px;font:inherit;font-weight:650;font-size:.96rem;cursor:not-allowed;opacity:.45;transition:opacity .15s}
+  .primary.armed{cursor:pointer;opacity:1}
+  .primary.armed:hover{filter:brightness(1.05)}
+  .ghost{width:100%;margin-top:9px;background:transparent;border:1px solid var(--hairline);border-radius:12px;
+    padding:11px;font:inherit;font-size:.9rem;color:var(--muted);cursor:pointer}
+
+  /* lesson */
+  .steps{display:flex;align-items:center;gap:7px;margin:2px 0 16px}
+  .steps .st{height:7px;border-radius:999px;background:var(--hairline);transition:background .2s}
+  .steps .st.done{background:var(--teal)}
+  .steps .st.now{background:var(--accent)}
+  .steps span.lbl{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--muted)}
+  .card{background:var(--card);border:1px solid var(--hairline);border-radius:14px;padding:16px 16px 14px;margin-bottom:12px}
+  .k{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin:0 0 6px;font-style:normal}
+  h3{font-family:"Fraunces",serif;font-weight:560;font-size:1.05rem;margin:0 0 6px}
+  .card p{margin:0 0 4px;color:var(--muted);font-size:.88rem}
+  .term b{color:var(--ink);font-family:"Fraunces",serif;font-weight:600}
+  .ok{color:var(--good);font-weight:600;font-size:.86rem}
+  .fine{font-size:.74rem;color:var(--muted);margin:6px 0 0}
+
+  /* hand-off */
+  .recap b{font-weight:600;color:var(--ink)}
+  .daycard{border:1.5px solid var(--accent);border-radius:14px;padding:14px 15px;margin-top:14px;
+    background:linear-gradient(180deg,color-mix(in srgb,var(--accent) 8%,transparent),transparent 70%)}
+  .daycard .k{color:var(--accent)}
+  .daycard h3{margin-bottom:4px}
+  .times{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 4px}
+  .tl{border:1.4px solid var(--hairline);background:var(--card);border-radius:10px;padding:7px 11px;
+    font:inherit;font-size:.82rem;color:var(--ink);cursor:pointer}
+  .tl.pick{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+  .tl span{color:var(--muted)}
+  .note-sm{font-size:.76rem;color:var(--muted);margin:8px 0 0}
+
+  /* morning / notification */
+  .notif{display:flex;align-items:center;gap:11px;background:var(--card);border:1px solid var(--hairline);
+    border-radius:13px;padding:11px 13px;margin-bottom:16px}
+  .notif .ic{width:30px;height:30px;border-radius:9px;background:color-mix(in srgb,var(--teal) 14%,transparent);
+    display:grid;place-items:center;color:var(--teal);font-size:15px;flex:none}
+  .notif b{font-size:.9rem;display:block}
+  .notif span{font-size:.78rem;color:var(--muted)}
+  .streakline{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+  .streakline .d{font-family:"Fraunces",serif;font-weight:600;font-size:.82rem;text-align:center;line-height:1}
+  .streakline .d i{font-style:normal;display:block;font-family:"IBM Plex Mono",monospace;font-size:9px;color:var(--muted);font-weight:400;margin-top:3px}
+  .streakline .d.on{color:var(--accent);border-bottom:2.5px solid var(--accent);padding-bottom:3px}
+  .streakline .d.today{color:var(--ink)}
+  .mode{color:var(--muted)}.mode b{color:var(--teal)}
+
+  /* flow rail */
+  .flow{display:flex;border-top:1px solid var(--hairline);background:var(--paper)}
+  .fx{flex:1;padding:12px 4px 14px;display:flex;flex-direction:column;align-items:center;gap:7px;
+    cursor:pointer;border:0;background:transparent;color:var(--muted);font:inherit}
+  .fx i{width:10px;height:10px;border-radius:999px;background:var(--hairline);font-style:normal;transition:background .2s, transform .2s}
+  .fx span{font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.03em;text-align:center}
+  .fx.on{color:var(--ink)}.fx.on i{background:var(--accent);transform:scale(1.15)}
+  .fx.done i{background:var(--teal)}
+
+  .reset{text-align:center;margin-top:16px}
+  .reset button{background:transparent;border:1px solid var(--hairline);border-radius:999px;padding:7px 14px;
+    font:inherit;font-size:.78rem;color:var(--muted);cursor:pointer}
+  .reset button:hover{color:var(--ink)}
+  @media (max-width:520px){.frame{border-radius:16px}.screen{padding-inline:16px}}
+  @media (prefers-reduced-motion: reduce){.screen{transition:none}html{scroll-behavior:auto}}
+</style>
+
+<body>
+  <p class="note"><b>Prototype</b> · the hand-off loop → click through, or jump using the flow bar below</p>
+
+  <div class="frame">
+    <div class="statusbar">
+      <span id="clock">9:41</span>
+      <span style="display:flex;gap:6px"><i class="sb-icons" style="font-style:normal">··</i><span class="sb-icons"><i></i><i></i></span></span>
+    </div>
+    <div class="apphead">
+      <div class="logo">Unrot<i>·</i></div>
+      <div class="chip" id="chip">Day 1</div>
+    </div>
+
+    <!-- SCREENS -->
+    <div class="screen" id="screen">
+
+      <!-- 1 · goals -->
+      <div class="sblk" id="s-goals">
+        <p class="eyebrow">Welcome · 30 seconds</p>
+        <h1>What do you want to get better at with AI?</h1>
+        <p class="sub">One aim is enough — we’ll shape your 5-minute lessons around it.</p>
+        <div class="sel">
+          <button class="opt" data-goal="work"><span class="rk">•</span><span class="t"><b>Use AI at my job</b><span>Write, summarize, automate busywork</span></span></button>
+          <button class="opt" data-goal="role"><span class="rk">•</span><span class="t"><b>Grow toward a better role</b><span>AI skills for interviews and projects</span></span></button>
+          <button class="opt" data-goal="news"><span class="rk">•</span><span class="t"><b>Just keep up</b><span>What matters in AI news, in plain language</span></span></button>
+        </div>
+        <button class="primary" id="goals-next" disabled>Continue</button>
+      </div>
+
+      <!-- 2 · lesson -->
+      <div class="sblk" id="s-lesson" hidden>
+        <p class="eyebrow">Day 1 · AI Basics</p>
+        <h2>Your first 5 minutes</h2>
+        <div class="steps"><span class="st done"></span><span class="st done"></span><span class="st now"></span><span class="st"></span><span class="st"></span><span class="lbl">Lesson 1 of 5</span></div>
+        <div class="card"><div class="k">Term 1</div><h3>Context window</h3><p class="term">How much a model can “see” in one go — like the <b>working memory</b> of a conversation.</p></div>
+        <div class="card"><div class="k">Term 2</div><h3>Temperature</h3><p class="term">How <b>creative</b> the output is. Low = precise, high = loose.</p></div>
+        <div class="card"><div class="k">Term 3</div><h3>Token limits</h3><p class="term">The daily cap on what you can send — the <b>budget</b> you’ll learn to spend well.</p></div>
+        <button class="primary armed" id="lesson-next">Finish lesson</button>
+      </div>
+
+      <!-- 3 · hand-off -->
+      <div class="sblk" id="s-handoff" hidden>
+        <p class="eyebrow">Day 1 · Almost done</p>
+        <h2>Nice work — let’s lock in tomorrow.</h2>
+        <div class="card recap">Today you learned <b>context windows</b>, <b>temperature</b> and <b>token limits</b>. <span class="ok">Saved to your review deck.</span><p class="fine">Deck now holds 3 terms · Day 1 of your goal: “Use AI at my job”.</p></div>
+        <div class="daycard">
+          <div class="k">Tomorrow’s plan</div>
+          <h3>Prompting basics · 5 min</h3>
+          <p>Today’s terms become tomorrow’s prompt practice — 6 new terms, one 10-second quiz.</p>
+          <div class="times">
+            <button class="tl" data-t="Morning">Morning <span>7:45a</span></button>
+            <button class="tl" data-t="Lunch">Lunch <span>12:30p</span></button>
+            <button class="tl" data-t="Evening">Evening <span>8:15p</span></button>
+          </div>
+          <p class="note-sm">We’ll nudge you once at that time. Weekdays, so it stays a habit.</p>
+          <button class="primary" id="handoff-ok" disabled>Set reminder &amp; done</button>
+          <button class="ghost" id="handoff-skip">Skip — I’ll remember</button>
+        </div>
+      </div>
+
+      <!-- 4 · morning -->
+      <div class="sblk" id="s-morning" hidden>
+        <p class="eyebrow">Next morning · 7:45 am</p>
+        <h2>Your reminder waited for you.</h2>
+        <div class="notif"><div class="ic"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.2a.9.9 0 0 1 .9.9 4.2 4.2 0 0 1 3.3 4.1V10l1 1.2v.3H2.8v-.3l1-1.2V7.2A4.2 4.2 0 0 1 7.1 3.1a.9.9 0 0 1 .9-.9Zm-2.5 10a2.6 2.6 0 0 0 5 0Z" fill="currentColor"/></svg></div><div><b>“Your 5 minutes are ready.”</b><span>Prompting basics · from Unrot · just now</span></div></div>
+        <p class="mode" style="margin:0 0 12px">That’s the nudge we promised — one, at the hour you chose. Nothing more.</p>
+        <div class="streakline">
+          <span class="d on"><i>mon</i>1</span><span class="d on"><i>tue</i>2</span><span class="d today"><i>wed</i>today</span><span class="d"><i>thu</i></span><span class="d"><i>fri</i></span>
+        </div>
+        <div class="card"><div class="k">New today</div><h3>Prompting basics</h3><p>Three weak→strong examples, then a 10-second rewrite drill. Ready when you are.</p></div>
+        <button class="primary armed" id="morning-next">Open today’s 5 minutes</button>
+      </div>
+
+      <!-- 5 · day2 -->
+      <div class="sblk" id="s-day2" hidden>
+        <p class="eyebrow">Day 2 · 5 minutes</p>
+        <h2>Back — with a plan.</h2>
+        <div class="steps"><span class="st done"></span><span class="st done"></span><span class="st done"></span><span class="st now"></span><span class="st"></span><span class="lbl">Lesson 2 of 5</span></div>
+        <div class="card"><div class="k">Weak prompt</div><h3>“Write about AI.”</h3><p>Too wide — the model guesses what you want.</p></div>
+        <div class="card"><div class="k">Strong prompt</div><h3>“List 5 ways a customer-support lead can use AI to cut reply time, each in one sentence.”</h3><p>Role, task, format, audience — the four dials you’ll practice.</p></div>
+        <div class="card"><p class="term"><b>You’re on a 2-day chain.</b> <span class="ok">Deck now holds 6 terms.</span></p><p class="fine">The same hand-off will be waiting at the end of this lesson — that’s the whole loop.</p></div>
+        <button class="primary armed" id="day2-done">Nice — done for today</button>
+      </div>
+
+    </div>
+
+    <!-- FLOW RAIL -->
+    <div class="flow" id="flow">
+      <button class="fx" data-ix="0"><i></i><span>Goals</span></button>
+      <button class="fx" data-ix="1"><i></i><span>Lesson 1</span></button>
+      <button class="fx" data-ix="2"><i></i><span>The hand-off</span></button>
+      <button class="fx" data-ix="3"><i></i><span>Your morning</span></button>
+      <button class="fx" data-ix="4"><i></i><span>Day 2</span></button>
+    </div>
+  </div>
+
+  <div class="reset"><button type="button" id="reset">↺ Restart the journey</button></div>
+
+  <script>
+  (function(){
+    var SCREENS=['s-goals','s-lesson','s-handoff','s-morning','s-day2'];
+    var step=0;
+    var screenEl=document.getElementById('screen');
+    var fx=Array.prototype.slice.call(document.querySelectorAll('#flow .fx'));
+    var chip=document.getElementById('chip');
+    var clock=document.getElementById('clock');
+
+    // synthetic deadline for realism; local time happy-path
+    function tickClock(){var d=new Date();clock.textContent=d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});}
+    tickClock();setInterval(tickClock,15000);
+
+    function paint(){
+      for(var i=0;i<SCREENS.length;i++){
+        var el=document.getElementById(SCREENS[i]);
+        if(el)el.hidden=(i!==step);
+      }
+      for(var j=0;j<fx.length;j++){
+        fx[j].classList.toggle('on',j===step);
+        fx[j].classList.toggle('done',j<step);
+      }
+      chip.textContent = step===0 ? 'Day 1' : (step<=2 ? 'Day 1 · plan' : 'Day 2 · streak');
+    }
+    function go(n){
+      if(n<0||n>=SCREENS.length)return;
+      if(n===step){return;}
+      screenEl.classList.add('swap');
+      setTimeout(function(){
+        step=n;paint();
+        screenEl.classList.remove('swap');
+      },180);
+    }
+
+    // ---- goal select (step 0) ----
+    var goalChoice=null;
+    var goalOpts=document.querySelectorAll('#s-goals .opt');
+    goalOpts.forEach(function(o){o.addEventListener('click',function(){
+      goalChoice=o.getAttribute('data-goal');
+      goalOpts.forEach(function(x){x.classList.toggle('pick',x===o);});
+      document.getElementById('goals-next').disabled=false;
+      document.getElementById('goals-next').classList.add('armed');
+    });});
+    document.getElementById('goals-next').addEventListener('click',function(){if(!this.disabled)go(1);});
+
+    // ---- lesson (step 1) ----
+    document.getElementById('lesson-next').addEventListener('click',function(){go(2);});
+
+    // ---- hand-off (step 2) ----
+    var timeChoice='Morning 7:45a';
+    var tl=document.querySelectorAll('#s-handoff .tl');
+    tl.forEach(function(b){b.addEventListener('click',function(){
+      timeChoice=b.getAttribute('data-t');
+      tl.forEach(function(x){x.classList.toggle('pick',x===b);});
+      document.getElementById('handoff-ok').disabled=false;
+      document.getElementById('handoff-ok').classList.add('armed');
+    });});
+    document.getElementById('handoff-ok').addEventListener('click',function(){
+      if(this.disabled)return; go(3);
+    });
+    document.getElementById('handoff-skip').addEventListener('click',function(){go(3);});
+
+    // ---- morning (step 3) ----
+    document.getElementById('morning-next').addEventListener('click',function(){go(4);});
+
+    // ---- day 2 done (step 4): loop back to the hand-off, wrap the journey ----
+    document.getElementById('day2-done').addEventListener('click',function(){
+      go(2); // the loop: another hand-off awaits at the end of lesson 2
+    });
+
+    // ---- flow rail navigation ----
+    fx.forEach(function(b){b.addEventListener('click',function(){
+      go(parseInt(b.getAttribute('data-ix'),10));
+    });});
+
+    // ---- reset ----
+    document.getElementById('reset').addEventListener('click',function(){
+      step=-1;go(0);setTimeout(function(){
+        goalOpts.forEach(function(x){x.classList.remove('pick');});
+        tl.forEach(function(x){x.classList.remove('pick');});
+        var gn=document.getElementById('goals-next'),ho=document.getElementById('handoff-ok');
+        gn.disabled=true;gn.classList.remove('armed');
+        ho.disabled=true;ho.classList.remove('armed');
+      },200);
+    });
+
+    paint();
+  })();
+  </script>
+</body>
